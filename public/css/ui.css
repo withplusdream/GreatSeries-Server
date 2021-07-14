@@ -1,0 +1,246 @@
+html,
+body {
+    overflow: hidden;
+}
+
+body {
+    background: #222222;
+    color: #efefef;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+#canvas-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-content: center;
+}
+
+#container {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    transform-origin: right bottom;
+    transform: scale(0.3);
+    cursor: pointer;
+    transition: transform .3s;
+    background: #000;
+    overflow: hidden;
+}
+
+#container.open {
+    transform: scale(1);
+}
+
+#container:hover>.inner {
+    opacity: 0.75;
+}
+
+#container>.inner {
+    position: relative;
+    transform-origin: center center;
+    transform: scaleX(-1);
+}
+
+#container canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+#nav {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.point {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    background: #ff0000;
+}
+
+.illustration-canvas {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff22;
+}
+
+.overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: #222222;
+    z-index: 999;
+}
+
+.overlay>.inner-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.overlay>.inner>*,
+.overlay>.inner>div>* {
+    margin-top: 10px !important;
+}
+
+.overlay>.inner>p,
+.overlay>.inner>div>p {
+    margin-top: 20px !important;
+}
+
+#btn-join {
+    margin-top: 20px !important;
+}
+
+.overlay>.inner>*:first-child {
+    margin-top: 0 !important;
+}
+
+.overlay>.inner h1 {
+    font-size: 30px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.overlay>.inner .btn,
+.overlay>.inner .input,
+.overlay>.inner .select {
+    display: block;
+}
+
+#loading-icon {
+    position: relative;
+    height: 15px;
+    white-space: nowrap;
+}
+
+#loading-icon>span {
+    display: inline-block;
+    margin: 0 20px;
+    padding: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    animation: loading 1s alternate infinite;
+}
+
+#loading-icon>span:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+#loading-icon>span:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes loading {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(3);
+    }
+}
+
+#loading-message {
+    text-align: center;
+}
+
+#user-list {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background: #ffffff33;
+    width: 150px;
+}
+
+#user-list li {
+    font-size: 16px;
+    color: white;
+    margin-top: 15px;
+    border: solid 1px #ffffff55;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+#user-list li:first-child {
+    margin-top: 0;
+}
+
+span.name {
+    font-weight: bold;
+}
+
+span.mode {
+    font-size: 0.8em;
+    float: right;
+    line-height: 16px;
+}
+
+#logo-withplus {
+    position: fixed;
+    display: block;
+    width: 200px;
+    height: auto;
+    left: 20px;
+    bottom: 20px;
+}
+
+#room-title {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+    line-height: 1em;
+    border: solid 1px white;
+    border-radius: 7px;
+    padding: 10px 15px;
+    min-height: 30px;
+    min-width: 30px;
+}
+
+#room-title input {
+    display: none;
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 1em;
+    color: white;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+#room-title.edit {
+    background: #ffffff22;
+    border-radius: 5px;
+}
+
+#room-title.edit input {
+    display: inline;
+}
+
+#room-title.edit span {
+    display: none;
+}
+
+.category-list .btn {
+    min-width: 200px;
+}
