@@ -252,7 +252,7 @@ io.on('connection', function(socket) {
 
     // 유저 추가
     socket.on('CreateUser', function(data) {
-        console.log("AddUser".data)
+        console.log('CreateUser',data)
         const team = getTeam(data.team_id);
         if(team){
             if(createUser(socket.id,data.name,team)){
