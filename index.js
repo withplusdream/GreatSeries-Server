@@ -198,6 +198,17 @@ io.on('connection', function(socket) {
         console.log('user disconnected');
     });
 
+    /* 테스트 페이지 */
+    socket.on('SendTest', function(data) {
+        let text = "";
+        for(let prop in data){
+            if(text != "") text += ", ";
+            text += "["+prop + "] " + data[prop];
+        }
+        // Admin 페이지에 메세지를 전달함
+        socket.emit("message", { text: "서버로 전송된 데이터\n" + text });
+    });
+
 
     /*=== 게임 클라이언트 요청 이벤트 ===*/
 

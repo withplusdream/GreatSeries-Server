@@ -26,18 +26,9 @@
         <div class="col-33">
             <div class="container">
                 <h2>전송</h2>
-                <input id="input-my-team-id" type="number" placeholder="내팀번호">
-                <input id="input-team-id" type="number" placeholder="팀번호">
-                <button id="btn-propose-negotiation">협상 시작</button>
-                <button id="btn-accepted-negotiation-true">협상 승인</button>
-                <button id="btn-accepted-negotiation-false">협상 취소</button>
-                <button id="btn-close-negotiation">협상 닫기</button>
-                <button id="btn-leave-negotiation">협상 떠나기</button>
-                <button id="btn-allteam-login">모든팀 로그인 완료</button>
-            </div>
-        </div>
-        <div class="col-33">
-            <div class="container">
+                <input id="input-text" type="text" placeholder="텍스트">
+                <input id="input-number" type="number" placeholder="숫자">
+                <button id="btn-send">전송</button>
             </div>
         </div>
     </div>
@@ -48,49 +39,16 @@
     var socket = io();
     var onevent = socket.onevent;
 
-    $("#btn-propose-negotiation").click(function() {
-        console.log("#btn-propose-negotiation");
-        socket.emit("ProposeNegotiation", {
-            send_team_id: parseInt($("#input-my-team-id").val()),
-            receive_team_id: parseInt($("#input-team-id").val())
+    $("#btn-send").click(function() {
+        console.log("SendTest");
+        socket.emit("SendTest", {
+            text: $("#input-text").val(),
+            number: parseInt($("#input-number").val())
         });
     });
 
-    $("#btn-accepted-negotiation-true").click(function() {
-        console.log("#btn-accepted-negotiation-true");
-        socket.emit("AcceptNegotiation", {
-            send_team_id: parseInt($("#input-my-team-id").val()),
-            receive_team_id: parseInt($("#input-team-id").val()),
-            isAccepted: true
-        });
-    });
-
-    $("#btn-accepted-negotiation-false").click(function() {
-        console.log("#btn-accepted-negotiation-false");
-        socket.emit("AcceptNegotiation", {
-            send_team_id: parseInt($("#input-my-team-id").val()),
-            receive_team_id: parseInt($("#input-team-id").val()),
-            isAccepted: false
-        });
-    });
-
-    $("#btn-close-negotiation").click(function() {
-        console.log("#btn-close-negotiation");
-        socket.emit("CloseNegotiation", {
-            send_team_id: parseInt($("#input-my-team-id").val()),
-            receive_team_id: parseInt($("#input-team-id").val())
-        });
-    });
-
-    $("#btn-leave-negotiation").click(function() {
-        console.log("#btn-leave-negotiation");
-        socket.emit("LeaveNegotiation", {
-            send_team_id: parseInt($("#input-my-team-id").val())
-        });
-    });
-
-    $("#btn-allteam-login").click(function() {
-        console.log("#btn-allteam-login");
-        socket.emit("AllTeamLogin", {});
+    socket.on("message", function(data) {
+        console.log("message", data);
+        alert(data.text);
     });
 </script>
