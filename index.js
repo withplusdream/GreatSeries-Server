@@ -250,6 +250,17 @@ io.on('connection', function(socket) {
         });    
     });
 
+    // 유저 추가
+    socket.on('CreateUser', function(data) {
+        console.log("AddUser".data)
+        const team = getTeam(data.team_id);
+        if(team){
+            if(createUser(socket.id,data.name,team)){
+                socket.emit('CreateUser');
+            }
+        }
+    });
+
     // 모든팀 로그인
     socket.on('AllTeamLogin', function(data) {
         console.log("AllTeamLogin".data)
@@ -280,6 +291,13 @@ io.on('connection', function(socket) {
             }
             socket.emit("GetTeams", { list });
         }
+    });
+
+    // 유저 리스트 요청
+    socket.on('GetUsers', function(data) {
+        socket.emit("GetUsers", {
+            list: getUserList(data.id)
+        });
     });
 
     // 룸 리스트 페이지에서 룸선택 시 소켓의 해당 룸 join
@@ -669,10 +687,11 @@ function createTeam(name, room) {
 }
 
 // 유저 추가
-function createUser(name, team) {
+function createUser(socket_id, name, team) {
     let user = {
         ...deepClone(user_template),
         name,
+        socket_id,
         id:userCount,
         parent:team
     };
@@ -683,6 +702,14 @@ function createUser(name, team) {
     return user;
 }
 
+// 유저 소켓아이디 변경
+function changeUserSocketID(socket_id, id) {
+    let user = getUser(id);
+    if(user){
+        user.socket_id = socket_id;
+        return user;
+    }
+}
 
 /*=== 데이터 편집 ===*/
 
