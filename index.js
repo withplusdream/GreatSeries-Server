@@ -11,9 +11,11 @@ let url = require('url');
 let channelCount = 0;
 let roomCount = 0;
 let teamCount = 0;
+let userCount = 0;
 let channels = [];
 let rooms = [];
 let teams = [];
+let users = [];
 
 
 /*== 채널시스템 관련 템플릿 ===*/
@@ -45,6 +47,15 @@ let team_template = {
     current_page: "TeamName",
 };
 
+// 유저 템플릿
+let user_template = {
+    id: null,
+    socket_id: null,
+    isLogin: false,
+    name: "",
+    current_page: "TeamName",
+};
+
 
 // 관리자 리스트
 let admin_list = [
@@ -64,6 +75,7 @@ fs.readFile('./data/save.json', 'utf-8', (err, data) => {
             channelCount = saved_data.channelCount;
             roomCount = saved_data.roomCount;
             teamCount = saved_data.teamCount;
+            userCount = saved_data.userCount;
             channels = saved_data.channels;
             for (let channel of channels) {
                 for (let room of channel.rooms) {
@@ -72,6 +84,10 @@ fs.readFile('./data/save.json', 'utf-8', (err, data) => {
                     for (let team of room.teams) {
                         team.parent = room;
                         teams.push(team);
+                        for (let user of team.users) {
+                            user.parent = team;
+                            users.push(user);
+                        }
                     }
                 }
             }
@@ -107,8 +123,16 @@ function saveData(filename) {
                 for (let team of room.teams) {
                     let team_ = {
                         ...team,
-                        parent: null
+                        parent: null,
+                        users: []
                     };
+                    for (let user of team.users) {
+                        let user_ = {
+                            ...user,
+                            parent: null
+                        };
+                        team_.users.push(user_);
+                    }
                     room_.teams.push(team_);
                 }
                 channel_.rooms.push(room_);
@@ -120,6 +144,7 @@ function saveData(filename) {
             channelCount,
             roomCount,
             teamCount,
+            userCount,
             channels: channels_
         });
 
@@ -461,6 +486,11 @@ io.on('connection', function(socket) {
     socket.on('getTeamList', function(data) {
         socket.emit("getTeamList", { team_list: getTeamList(data.room_id) });
     });
+    
+    // 유저 리스트 요청
+    socket.on('getUserList', function(data) {
+        socket.emit("getUserList", { user_list: getUserList(data.team_id) });
+    });
 
     // 채널 패스워드 요청
     socket.on('get_channel_password', function(data) {
@@ -495,6 +525,7 @@ io.on('connection', function(socket) {
             let team = room.teams[i];
             team.isLogin = false;
             team.name = i + 1 + "";
+            team.users = [];
         }
 
         // Admin 페이지에 메세지를 전달함
@@ -565,6 +596,21 @@ function getTeamList(room_id) {
     return list;
 }
 
+// 유저 리스트 얻기
+function getUserList(team_id) {
+    let team = getTeam(team_id);
+    let list = [];
+    console.log(team);
+    for (let user of team.users) {
+
+        list.push({
+            id: user.id,
+            name: user.name
+        });
+    }
+    return list;
+}
+
 // 채널아이디로 채널 얻기
 function getChannel(id) {
     return channels.filter(channel => channel.id == id)[0];
@@ -578,6 +624,11 @@ function getRoom(id) {
 // 팀아이디로 팀 얻기
 function getTeam(id) {
     return teams.filter(team => team.id == id)[0];
+}
+
+// 유저아이디로 유저 얻기
+function getUser(id) {
+    return users.filter(user => user.id == id)[0];
 }
 
 // 채널 추가
@@ -615,6 +666,21 @@ function createTeam(name, room) {
     teamCount++;
 
     return team;
+}
+
+// 유저 추가
+function createUser(name, team) {
+    let user = {
+        ...deepClone(user_template),
+        name,
+        id:userCount,
+        parent:team
+    };
+    team.users.push(user);
+    users.push(user);
+    userCount++;
+
+    return user;
 }
 
 
