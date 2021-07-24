@@ -85,48 +85,62 @@ fs.readFile('./data/save.json', 'utf-8', (err, data) => {
 });
 
 // 데이터 저장 함수
+let last_saved_time = Date.now();
+let save_wait = false;
 function saveData(filename) {
-    let channels_ = [];
-    for (let channel of channels) {
-        let channel_ = {
-            id: channel.id,
-            name: channel.name,
-            password: channel.password,
-            rooms: []
-        };
-        for (let room of channel.rooms) {
-            let room_ = {
-                ...room,
-                parent: null,
-                teams: []
+    let current_time = Date.now();
+    if(current_time > last_saved_time + 1000 * 5){
+        let channels_ = [];
+        for (let channel of channels) {
+            let channel_ = {
+                id: channel.id,
+                name: channel.name,
+                password: channel.password,
+                rooms: []
             };
-            for (let team of room.teams) {
-                let team_ = {
-                    ...team,
-                    parent: null
+            for (let room of channel.rooms) {
+                let room_ = {
+                    ...room,
+                    parent: null,
+                    teams: []
                 };
-                room_.teams.push(team_);
+                for (let team of room.teams) {
+                    let team_ = {
+                        ...team,
+                        parent: null
+                    };
+                    room_.teams.push(team_);
+                }
+                channel_.rooms.push(room_);
             }
-            channel_.rooms.push(room_);
+            channels_.push(channel_);
         }
-        channels_.push(channel_);
+
+        const data = JSON.stringify({
+            channelCount,
+            roomCount,
+            teamCount,
+            channels: channels_
+        });
+
+        // write JSON string to a file
+        fs.writeFile(filename?'./data/backup/'+filename+'.json':'./data/save.json', data, (err) => {
+            if (err) {
+                console.log("admin save is fail.");
+            } else {
+                //console.log("JSON data is saved.");
+            }
+        });
+        last_saved_time = current_time;
+        save_wait = false;
     }
-
-    const data = JSON.stringify({
-        channelCount,
-        roomCount,
-        teamCount,
-        channels: channels_
-    });
-
-    // 파일에 JSON 형식으로 저장
-    fs.writeFile(filename?'./data/'+filename+'.json':'./data/save.json', data, (err) => {
-        if (err) {
-            console.log("Save is fail.");
-        } else {
-            console.log("JSON data is saved.");
-        }
-    });
+    else{
+        save_wait = true;
+        setTimeout(function(){
+            if(filename) saveData(filename);
+            else if(save_wait) saveData();
+        }, 1000 * 5);
+    }
 }
 
 
@@ -223,46 +237,45 @@ io.on('connection', function(socket) {
     // 팀 리스트 요청
     socket.on('GetTeams', function(data) {
         const room = getRoom(data.room_id);
-
-        let list = [];
-        for (let i = 0; i < room.teams.length; i++) {
-            list.push({ id: room.teams[i].id, index: room.teams[i].index, name: room.teams[i].name });
+        if(room){
+            let list = [];
+            for (let i = 0; i < room.teams.length; i++) {
+                list.push({ id: room.teams[i].id, index: room.teams[i].index, name: room.teams[i].name });
+            }
+            socket.emit("GetTeams", { list });
         }
-        socket.emit("GetTeams", { list });
     });
 
     // 룸 리스트 페이지에서 룸선택 시 소켓의 해당 룸 join
     // 매니저 재 접속 시 저장된 데이터 받아옴
     socket.on('JoinRoom', function(data) {
-        socket.join('room-' + data.room_id);
         const room = getRoom(data.room_id);
-
-        if (data.isAdmin) {
-            if(room.isLogin){
-                socket.emit("LoadStatus", {
-                    page_name: room.current_page,
-                });
+        if(room){
+            socket.join('room-' + data.room_id);
+            if (data.isAdmin) {
+                if(room.isLogin){
+                    socket.emit("LoadStatus", {
+                        page_name: room.current_page,
+                    });
+                }
+                room.isLogin = true;
             }
-            room.isLogin = true;
-        }
 
-        let list = [];
-        for (let i = 0; i < room.teams.length; i++) {
-            list.push({ id: room.teams[i].id, index: room.teams[i].index, name: room.teams[i].name });
+            let list = [];
+            for (let i = 0; i < room.teams.length; i++) {
+                list.push({ id: room.teams[i].id, index: room.teams[i].index, name: room.teams[i].name });
+            }
+            socket.emit("GetTeams", { list });
         }
-        socket.emit("GetTeams", { list });
     });
 
     // 팀 리스트 페이지에서 팀선택 시 소켓의 해당 팀 join
     // 유저 접속 시 저장된 데이터 받아옴
     socket.on('JoinTeam', function(data) {
         const team = getTeam(data.team_id)
-        socket.join('team-' + team.id);
 
-        if (team.isLogin) {
-
-            const room = team.parent;
-
+        if (team && team.isLogin) {
+            socket.join('team-' + team.id);
             socket.emit("LoadStatus", {
                 page_name: team.current_page,
             });
@@ -304,11 +317,12 @@ io.on('connection', function(socket) {
         console.log("SendCurrentPage", data);
         const team = getTeam(data.team_id);
         const room = getRoom(data.room_id);
+
         if(data.isAdmin) {
-            room.current_page = data.page_name;
+            if(room)room.current_page = data.page_name;
         }
         else{
-            team.current_page = data.page_name;
+            if(team)team.current_page = data.page_name;
         }
     });
 
@@ -317,21 +331,23 @@ io.on('connection', function(socket) {
 
         const team = getTeam(data.id);
         const room = team.parent;
-        team.name = data.teamname;
-        io.to("team-" + team.id).emit('SetTeamName', data);
 
-        // 팀 로그인상태로 전환
-        team.isLogin = true;
+        if(team){
+            team.name = data.teamname;
+            io.to("team-" + team.id).emit('SetTeamName', data);
 
-        // 모든 팀이 로그인했는지 확인
-        let total = room.teams.length;
-        let number = 0;
-        for (let team_ of room.teams) {
-            if (team_.isLogin) number++;
+            // 팀 로그인상태로 전환
+            team.isLogin = true;
+
+            // 모든 팀이 로그인했는지 확인
+            let total = room.teams.length;
+            let number = 0;
+            for (let team_ of room.teams) {
+                if (team_.isLogin) number++;
+            }
+            console.log(number + "/" + total);
+            if (number == total) io.to("room-" + room.id).emit("AllTeamLogin", { room_id: room.id });
         }
-        console.log(number + "/" + total);
-        if (number == total) io.to("room-" + room.id).emit("AllTeamLogin", { room_id: room.id });
-
     });
 
 
@@ -355,28 +371,32 @@ io.on('connection', function(socket) {
     // 팀 추가
     socket.on('add_team', function(data) {
         const room = getRoom(data.room_id);
-        createTeam(data.name, room);
-        let index = 0;
-        for (let team of room.teams) {
-            team.index = ++index;
+        if(room){
+            createTeam(data.name, room);
+            let index = 0;
+            for (let team of room.teams) {
+                team.index = ++index;
+            }
+            socket.emit("getTeamList", { team_list: getTeamList(data.room_id) });
+            saveData();
         }
-        socket.emit("getTeamList", { team_list: getTeamList(data.room_id) });
-        saveData();
     });
 
     // 채널 삭제
     socket.on('remove_channel', function(data) {
         let channel = getChannel(data.channel_id);
-        for (let room of channel.rooms) {
-            let idx = rooms.indexOf(room);
-            rooms.splice(idx, 1);
+        if(channel){
+            for (let room of channel.rooms) {
+                let idx = rooms.indexOf(room);
+                rooms.splice(idx, 1);
+            }
+
+            idx = channels.indexOf(channel);
+            channels.splice(idx, 1);
+
+            socket.emit("getChannelList", { channel_list: getChannelList() });
+            saveData();
         }
-
-        idx = channels.indexOf(channel);
-        channels.splice(idx, 1);
-
-        socket.emit("getChannelList", { channel_list: getChannelList() });
-        saveData();
     });
        
     // 룸 삭제
@@ -399,21 +419,21 @@ io.on('connection', function(socket) {
         const team = getTeam(data.team_id);
         const room = team.parent;
 
-        console.log(team, room);
+        if(team){
+            let idx = room.teams.indexOf(team);
+            room.teams.splice(idx, 1);
 
-        let idx = room.teams.indexOf(team);
-        room.teams.splice(idx, 1);
+            idx = teams.indexOf(team);
+            teams.splice(idx, 1);
 
-        idx = teams.indexOf(team);
-        teams.splice(idx, 1);
+            let index = 0;
+            for (let team of room.teams) {
+                team.index = ++index;
+            }
 
-        let index = 0;
-        for (let team of room.teams) {
-            team.index = ++index;
+            socket.emit("getTeamList", { team_list: getTeamList(room.id) });
+            saveData();
         }
-
-        socket.emit("getTeamList", { team_list: getTeamList(room.id) });
-        saveData();
     });
 
     // 채널 리스트 요청
@@ -429,6 +449,26 @@ io.on('connection', function(socket) {
     // 팀 리스트 요청
     socket.on('getTeamList', function(data) {
         socket.emit("getTeamList", { team_list: getTeamList(data.room_id) });
+    });
+
+    // 채널 패스워드 요청
+    socket.on('get_channel_password', function(data) {
+        let channel = getChannel(data.channel_id);
+        if(channel){
+            data.password = channel.password;
+            socket.emit("get_channel_password", data);
+        } 
+    });
+
+    // 채널 패스워드 변경
+    socket.on('change_channel_password', function(data) {
+        let channel = getChannel(data.channel_id);
+        if(channel){
+            channel.password = data.password;
+
+            // Admin 페이지에 메세지를 전달함
+            socket.emit("message", { text: "채널 패스워드가 '"+channel.password+"'로 변경되었습니다." });
+        } 
     });
 
     // 룸 리셋
