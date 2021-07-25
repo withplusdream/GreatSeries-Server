@@ -42,6 +42,7 @@ let room_template = {
 let team_template = {
     id: null,
     index: null,
+    users: [],
     isLogin: false,
     name: "",
     current_page: "TeamName",
