@@ -650,6 +650,11 @@ function getUser(id) {
     return users.filter(user => user.id == id)[0];
 }
 
+// 소켓아이디로 유저 얻기
+function getUserSocketID(socket_id) {
+    return users.filter(user => user.socket_id == socket_id)[0];
+}
+
 // 채널 추가
 function createChannel(name) {
     let channel = deepClone(channel_template);
