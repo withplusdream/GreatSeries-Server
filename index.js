@@ -9,7 +9,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 /*== db연결 ==*/
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -259,6 +259,18 @@ io.on("connection", function (socket) {
   });
 
   /*=== 게임 클라이언트 요청 이벤트 ===*/
+
+  socket.on("SendUserInfo", function (data) {
+    console.log("SendUserInfo", data);
+    // Admin 페이지에 메세지를 전달함
+    //socket.emit("message", { text: "서버로 전송된 데이터\n" + text });
+  });
+
+  socket.on("hello", function (data) {
+    console.log("hello", data);
+    // Admin 페이지에 메세지를 전달함
+    //socket.emit("message", { text: "서버로 전송된 데이터\n" + text });
+  });
 
   // 채널 엑세스코드 확인
   socket.on("CheckChannelPassword", function (data) {
