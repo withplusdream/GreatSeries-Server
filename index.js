@@ -5,6 +5,7 @@ let http = require("http").Server(app);
 let io = require("socket.io")(http);
 let url = require("url");
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 const cors = require("cors");
 require("dotenv").config();
 
@@ -33,6 +34,18 @@ connection.once("open", () => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+//user정보 스키마
+const userSchema = new Schema({
+  name: {
+    type: String,
+  },
+  password: {
+    type: String,
+  },
+});
+
+let Users = mongoose.model("users", userSchema);
 
 /*== 채널시스템 관련 변수 ===*/
 
@@ -262,14 +275,11 @@ io.on("connection", function (socket) {
 
   socket.on("SendUserInfo", function (data) {
     console.log("SendUserInfo", data);
-    // Admin 페이지에 메세지를 전달함
-    //socket.emit("message", { text: "서버로 전송된 데이터\n" + text });
-  });
-
-  socket.on("hello", function (data) {
-    console.log("hello", data);
-    // Admin 페이지에 메세지를 전달함
-    //socket.emit("message", { text: "서버로 전송된 데이터\n" + text });
+    user = new Users({
+      name: data.id,
+      password: data.password,
+    });
+    user.save();
   });
 
   // 채널 엑세스코드 확인
