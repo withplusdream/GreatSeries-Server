@@ -7,6 +7,8 @@ let url = require("url");
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const cors = require("cors");
+const { nextTick } = require("process");
+const { join } = require("path");
 require("dotenv").config();
 
 /*== db연결 ==*/
@@ -281,6 +283,25 @@ io.on("connection", function (socket) {
     });
     user.save();
   });
+
+  //회원가입 코드 -> 작동하는지 디버깅 필요
+  const register = async (req, res) => {
+    const { name, password } = req.body;
+    try {
+      let user = await Users.findOne({ name });
+      if (user) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User already exists" }] });
+      }
+      user = new User({
+        name,
+        password,
+      });
+    } catch (err) {
+      console.error(error.message);
+    }
+  };
 
   // 채널 엑세스코드 확인
   socket.on("CheckChannelPassword", function (data) {
