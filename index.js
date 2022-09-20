@@ -10,12 +10,15 @@ const cors = require("cors");
 const { nextTick } = require("process");
 const { join } = require("path");
 require("dotenv").config();
+const bodyParser = require("body-parser");
 
 /*== db연결 ==*/
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
 
 const uri = process.env.ATLAS_URI; // mongoDB Connect 정보
 console.log("uri", process.env.ATLAS_URI);
@@ -277,16 +280,18 @@ io.on("connection", function (socket) {
 
   socket.on("SendUserInfo", function (data) {
     console.log("SendUserInfo", data);
-    user = new Users({
-      name: data.id,
-      password: data.password,
-    });
-    user.save();
+    // user = new Users({
+    //   name: data.id,
+    //   password: data.password,
+    // });
+    // user.save();
+    register(data);
   });
 
   //회원가입 코드 -> 작동하는지 디버깅 필요
-  const register = async (req, res) => {
-    const { name, password } = req.body;
+  async function register(data) {
+    const name = data.id;
+    const password = data.password;
     try {
       let user = await Users.findOne({ name });
       if (user) {
@@ -294,14 +299,15 @@ io.on("connection", function (socket) {
           .status(400)
           .json({ errors: [{ msg: "User already exists" }] });
       }
-      user = new User({
+      user = new Users({
         name,
         password,
       });
+      console.log(user);
     } catch (err) {
-      console.error(error.message);
+      console.error("user already exists"); // 위의 json error msg어떻게 띄우는지 살펴보기
     }
-  };
+  }
 
   // 채널 엑세스코드 확인
   socket.on("CheckChannelPassword", function (data) {
