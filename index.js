@@ -11,6 +11,7 @@ const { nextTick } = require("process");
 const { join } = require("path");
 require("dotenv").config();
 const bodyParser = require("body-parser");
+const { sign } = require("crypto");
 
 /*== db연결 ==*/
 const port = process.env.PORT || 3000;
@@ -307,6 +308,31 @@ io.on("connection", function (socket) {
     } catch (err) {
       console.error("user already exists"); // 위의 json error msg어떻게 띄우는지 살펴보기
     }
+  }
+
+  socket.on("SignIn", function (data) {
+    console.log("SignIn", data);
+    if (signin(data)) {
+      console.log("LoginSucess");
+      socket.emit("LoginSucess");
+    }
+    socket.emit("LoginSucess");
+  });
+
+  socket.on("test", function (data) {
+    console.log("test");
+    socket.emit("test"); //소켓통신이 서버에서 전송이 안되는중.. 왜이러징
+  });
+
+  //함수 나눌 이유가..?
+  function signin(data) {
+    Users.findOne({ name: data.id, password: data.password }, (err, user) => {
+      if (err) return console.log("error!");
+      else if (user) {
+        console.log("user login");
+        return true;
+      } else return console.log("no user");
+    });
   }
 
   // 채널 엑세스코드 확인
