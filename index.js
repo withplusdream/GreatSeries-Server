@@ -331,6 +331,7 @@ io.on("connection", function (socket) {
     });
   }
 
+  //테스트용
   // socket.on("test", function (data) {
   //   console.log("test");
   //   socket.emit("test", { text: "hello" }); //소켓통신이 서버에서 전송이 안되는중.. 왜이러징 -> 같이 전송하는 데이터 필요
