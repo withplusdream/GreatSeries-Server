@@ -305,23 +305,16 @@ io.on("connection", function (socket) {
         password,
       });
       console.log(user);
+      socket.emit("user register", user);
     } catch (err) {
       console.error("user already exists"); // 위의 json error msg어떻게 띄우는지 살펴보기
+      socket.emit("user register err", data);
     }
   }
 
   socket.on("SignIn", function (data) {
     console.log("SignIn", data);
-    if (signin(data)) {
-      console.log("LoginSucess");
-      socket.emit("LoginSucess");
-    }
-    socket.emit("LoginSucess");
-  });
-
-  socket.on("test", function (data) {
-    console.log("test");
-    socket.emit("test"); //소켓통신이 서버에서 전송이 안되는중.. 왜이러징
+    signin(data);
   });
 
   //함수 나눌 이유가..?
@@ -330,10 +323,18 @@ io.on("connection", function (socket) {
       if (err) return console.log("error!");
       else if (user) {
         console.log("user login");
-        return true;
-      } else return console.log("no user");
+        socket.emit("LoginSucess", user);
+      } else {
+        console.log("no user");
+        socket.emit("no user", user);
+      }
     });
   }
+
+  // socket.on("test", function (data) {
+  //   console.log("test");
+  //   socket.emit("test", { text: "hello" }); //소켓통신이 서버에서 전송이 안되는중.. 왜이러징 -> 같이 전송하는 데이터 필요
+  // });
 
   // 채널 엑세스코드 확인
   socket.on("CheckChannelPassword", function (data) {
